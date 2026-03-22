@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FloBut Gen</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span><strong>FloBut Gen</strong></span>
+        </div>
+
+        <nav class="header-tabs">
+            <button class="header-tab active" data-tab="generator">
+                <i class="fa-solid fa-sliders"></i> Generator
+            </button>
+            <button class="header-tab" data-tab="player">
+                <i class="fa-solid fa-circle-play"></i> Player
+            </button>
+        </nav>
+
+        <div class="header-actions">
+            <button id="guideBtn" class="button-guide" title="Kullanım Kılavuzu">
+                <i class="fa-solid fa-circle-question"></i>
+            </button>
+            <button id="generateBtn" class="button-primary" disabled>
+                <i class="fa-solid fa-play"></i> Lottie Oluştur
+            </button>
+            <button id="downloadBtn" disabled>
+                <i class="fa-solid fa-download"></i> İndir
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Sol Panel: Katmanlar ve Yükleme -->
+        <aside class="panel left-panel">
+            <div class="panel-header">Girdi (PSD / PNG)</div>
+            <div class="panel-content">
+                <div id="uploadArea" class="upload-area">
+                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                    <div class="upload-text">PSD veya Resim dosyasını buraya sürükleyin</div>
+                    <div class="upload-text" style="font-size: 12px;">veya</div>
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Dosya Seç</button>
+                    <input type="file" id="fileInput" accept=".psd,.png,.jpg,.jpeg">
+                </div>
+
+                <div id="layersList" class="layers-list">
+                    <!-- Layer öğeleri JavaScript ile eklenecek -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Orta Panel: Preview -->
+        <section class="panel center-panel">
+            <div class="preview-container">
+                <div id="emptyPreview" class="empty-state">
+                    <i class="fa-solid fa-film"></i>
+                    <p>Önizleme görmek için bir dosya yükleyin ve "Lottie Oluştur" butonuna basın.</p>
+                </div>
+                <!-- Lottie animasyonu buraya yüklenecek -->
+                <div id="lottie-preview" class="hidden"></div>
+            </div>
+            
+            <div class="preview-controls">
+                <button class="control-btn" id="playPauseBtn" disabled>
+                    <i class="fa-solid fa-pause"></i>
+                </button>
+                <div class="timeline" id="timeline">
+                    <div class="timeline-progress" id="timelineProgress"></div>
+                    <div class="timeline-thumb" id="timelineThumb" style="left: 0%"></div>
+                </div>
+                <span id="timeDisplay" style="font-size: 12px; color: var(--text-muted); width: 45px; text-align: right;">0.0s</span>
+            </div>
+        </section>
+
+        <!-- Sağ Panel: Ayarlar -->
+        <aside class="panel right-panel">
+            <div class="panel-header">Ayarlar</div>
+            <div class="panel-content">
+                
+                <div class="settings-group">
+                    <h3>Genel Proje Ayarları</h3>
+                    
+                    <div class="setting-row" style="display: none;">
+                        <label for="compWidth">Genişlik (px)</label>
+                        <input type="number" id="compWidth" class="setting-input" value="1000">
+                    </div>
+                    
+                    <div class="setting-row" style="display: none;">
+                        <label for="compHeight">Yükseklik (px)</label>
+                        <input type="number" id="compHeight" class="setting-input" value="1000">
+                    </div>
+                    
+                    <div class="setting-row" style="display: none;">
+                        <label for="compFps">FPS</label>
+                        <input type="number" id="compFps" class="setting-input" value="25">
+                    </div>
+                    
+                    <div class="setting-row">
+                        <label for="compDuration">Süre (sn)</label>
+                        <input type="number" id="compDuration" class="setting-input" value="8" step="0.1">
+                    </div>
+                </div>
+
+                <div id="layerSettingsState" class="empty-state" style="height: 150px; border-top: 1px solid var(--border);">
+                    <i class="fa-solid fa-layer-group" style="font-size: 24px; margin-bottom: 10px;"></i>
+                    <p>Katman ayarlarını görmek için soldan bir katman seçin.</p>
+                </div>
+
+                <div id="layer-settings-form">
+                    <div class="layer-settings-header" id="selectedLayerName">Katman: Katman 1</div>
+                    
+                    <div class="setting-row">
+                        <label for="layerType">Görev (Tip)</label>
+                        <select id="layerType" class="setting-input">
+                            <option value="background">Arka Plan (Statik)</option>
+                            <option value="main-icon">Ana İkon</option>
+                            <option value="text">Metin/Etiket</option>
+                            <option value="carousel">Carousel Görseli</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="animationPreset">Animasyon</label>
+                        <select id="animationPreset" class="setting-input">
+                            <option value="bounce-pop">Bounce Pop-in (Standart)</option>
+                            <option value="bounce-rotate">Bounce + Rotate 720°</option>
+                            <option value="none">Animasyon Yok</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="entryTiming">Zamanlama (Giriş)</label>
+                        <select id="entryTiming" class="setting-input">
+                            <option value="sequence">Sıranı Bekle (Carousel Sırası)</option>
+                            <option value="immediate">0. Frame'de Çık (Sabit Başlangıç)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="exitTiming">Görünürlük (Çıkış)</label>
+                        <select id="exitTiming" class="setting-input">
+                            <option value="sequential">Sonrakine Geçerken Küçül (Carousel)</option>
+                            <option value="keep">Animasyon Sonuna Kadar Kal</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-row" id="glowRow" style="display: none;">
+                        <label>Glow Efekti</label>
+                        <label class="glow-toggle">
+                            <input type="checkbox" id="layerGlow">
+                            <span class="glow-toggle-track"><span class="glow-toggle-thumb"></span></span>
+                            <span class="glow-toggle-label">BG'yi kendi rengiyle parlat</span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+    </main>
+
+    <!-- Player View -->
+    <section id="playerView" class="player-view hidden">
+        <div class="player-layout">
+            <!-- Drop Zone (sol) -->
+            <div class="player-sidebar">
+                <div class="panel-header">JSON Dosyası</div>
+                <div class="player-sidebar-content">
+                    <div id="playerDropZone" class="player-drop-zone">
+                        <i class="fa-solid fa-file-code"></i>
+                        <span>Lottie JSON dosyasını sürükleyin</span>
+                        <span style="font-size:12px;color:var(--text-muted);">veya</span>
+                        <button class="upload-btn" onclick="document.getElementById('playerFileInput').click()">Dosya Seç</button>
+                        <input type="file" id="playerFileInput" accept=".json">
+                    </div>
+                    <div id="playerInfo" class="player-info hidden">
+                        <div class="player-info-row"><span>Dosya</span><strong id="playerFileName">—</strong></div>
+                        <div class="player-info-row"><span>Süre</span><strong id="playerDuration">—</strong></div>
+                        <div class="player-info-row"><span>FPS</span><strong id="playerFps">—</strong></div>
+                        <div class="player-info-row"><span>Boyut</span><strong id="playerSize">—</strong></div>
+                        <div class="player-info-row"><span>Kareler</span><strong id="playerFrames">—</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas (orta) -->
+            <div class="player-center">
+                <div class="player-canvas-wrap">
+                    <div id="playerEmptyState" class="empty-state">
+                        <i class="fa-solid fa-circle-play"></i>
+                        <p>Soldaki alana bir Lottie JSON dosyası yükleyin.</p>
+                    </div>
+                    <div id="playerCanvas" class="hidden"></div>
+                </div>
+
+                <div class="player-controls-bar">
+                    <button id="playerPlayPause" class="control-btn" disabled>
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+
+                    <div class="timeline" id="playerTimeline">
+                        <div class="timeline-progress" id="playerProgress"></div>
+                        <div class="timeline-thumb" id="playerThumb" style="left:0%"></div>
+                    </div>
+
+                    <span id="playerTimeDisplay" style="font-size:12px;color:var(--text-muted);width:50px;text-align:right;">0.0s</span>
+
+                    <label class="player-loop-label" title="Döngü">
+                        <input type="checkbox" id="playerLoop" checked>
+                        <i class="fa-solid fa-repeat"></i>
+                    </label>
+
+                    <select id="playerSpeed" class="setting-input" style="width:72px;padding:6px 8px;font-size:12px;">
+                        <option value="0.5">0.5×</option>
+                        <option value="1" selected>1×</option>
+                        <option value="1.5">1.5×</option>
+                        <option value="2">2×</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Kullanım Kılavuzu Modalı -->
+    <div id="guideOverlay" class="guide-overlay hidden">
+        <div class="guide-modal">
+            <h2>FloBut Gen'e Hoş Geldin</h2>
+            <p class="guide-subtitle">Başlamadan önce hızlı bir bakış:</p>
+
+            <div class="guide-steps">
+                <div class="guide-step">
+                    <div class="guide-step-num">1</div>
+                    <div class="guide-step-body">
+                        <strong>PSD veya görsel dosyalarını yükle</strong>
+                        <span>Sol panele sürükle & bırak ya da "Dosya Seç" butonunu kullan. Birden fazla dosya seçebilirsin.</span>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-num">2</div>
+                    <div class="guide-step-body">
+                        <strong>Katmanları sıraya diz</strong>
+                        <span>Yüklenen katmanları sol panelde <strong>sürükleyerek yeniden sıralayabilirsin</strong>. Sıra, carousel animasyon geçiş sırasını belirler.</span>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-num">3</div>
+                    <div class="guide-step-body">
+                        <strong>Her katman için ayarları yap</strong>
+                        <span>Katmana tıkla, sağ panelden tip, animasyon ve zamanlama seçimlerini yap.</span>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-num">4</div>
+                    <div class="guide-step-body">
+                        <strong>Lottie'yi oluştur ve indir</strong>
+                        <span>Üst sağdaki "Lottie Oluştur" butonuna bas, önizlemeyi kontrol et, sonra indir.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guide-tip">
+                <i class="fa-solid fa-grip-lines"></i>
+                <strong>İpucu:</strong> Katmanları sıralamak için soldaki liste öğelerini tutup sürükle. Carousel sırası buna göre belirlenir.
+            </div>
+
+            <div class="guide-tip" style="margin-top: 10px;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>PSD Hazırlık Kuralları:</strong>
+                <ul style="margin: 8px 0 0 0; padding-left: 18px; line-height: 1.8;">
+                    <li>Tüm katmanlar <strong>rasterize</strong> edilmiş olmalıdır (akıllı nesne, grup veya efekt katmanı kabul edilmez).</li>
+                    <li>Katman isimleri, animasyonda <strong>sıralanacak düzene göre</strong> verilmelidir (örn: <em>bg, icon_1, icon_2, text</em>).</li>
+                    <li>Tüm katmanların <strong>görünürlüğü açık</strong> olmalıdır; gizli katmanlar içe aktarılmaz.</li>
+                </ul>
+            </div>
+
+            <div class="guide-modal-footer">
+                <label class="guide-dont-show">
+                    <input type="checkbox" id="dontShowAgain">
+                    Bir daha gösterme
+                </label>
+                <button id="guideCloseBtn">Anladım, Başla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Copyright -->
+    <div style="position: fixed; bottom: 10px; right: 16px; font-size: 11px; color: var(--text-muted); opacity: 0.5; pointer-events: none; user-select: none; z-index: 1;">
+        &copy; Türkay Karakurt
+    </div>
+
+    <!-- Bildirim Tostu -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-info"></i>
+        <div class="toast-message" id="toastMessage">İşlem başarılı.</div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Lottie Web Player -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+    <!-- ag-psd (PSD parsing) -->
+    <script src="https://cdn.jsdelivr.net/npm/ag-psd@17.0.1/dist/bundle.js"></script>
+    
+    <!-- App Logic -->
+    <script src="lottie-generator.min.js"></script>
+    <script src="app.min.js"></script>
+</body>
+</html>
